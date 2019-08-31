@@ -16,6 +16,11 @@ class GameManager {
     var timeExtension: Double = 0.2
     var playerDirection: Int = 4
     var currentScore: Int = 0
+    let speedFactor = 0.02
+    let screenWidth = 19
+    let screenHeight = 37
+    let initialX = 10
+    let initialY = 10
     
     init(scene: GameScene) {
         self.scene = scene
@@ -23,9 +28,17 @@ class GameManager {
     
     /// Initialize the snake and snake food initial positions
     func initGame() {
-        scene.playerPositions.append((10, 10))
-        scene.playerPositions.append((10, 11))
-        scene.playerPositions.append((10, 12))
+        scene.playerPositions.append((initialX, initialY))
+        scene.playerPositions.append((initialX, initialY + 1))
+        scene.playerPositions.append((initialX, initialY + 2))
+        scene.playerPositions.append((initialX, initialY + 3))
+        scene.playerPositions.append((initialX, initialY + 4))
+        scene.playerPositions.append((initialX, initialY + 5))
+        scene.playerPositions.append((initialX, initialY + 6))
+        scene.playerPositions.append((initialX, initialY + 7))
+        scene.playerPositions.append((initialX, initialY + 8))
+        scene.playerPositions.append((initialX, initialY + 9))
+        scene.playerPositions.append((initialX, initialY + 10))
         renderChange()
         generateNewPoint()
     }
@@ -57,33 +70,33 @@ class GameManager {
         var xChange = -1
         var yChange = 0
         switch playerDirection {
-            case 1:
-                //left
-                xChange = -1
-                yChange = 0
-                break
-            case 2:
-                //up
-                xChange = 0
-                yChange = -1
-                break
-            case 3:
-                //right
-                xChange = 1
-                yChange = 0
-                break
-            case 4:
-                //down
-                xChange = 0
-                yChange = 1
-                break
-            case 0:
-                //dead
-                xChange = 0
-                yChange = 0
-                break
-            default:
-                break
+        case 1:
+            //left
+            xChange = -1
+            yChange = 0
+            break
+        case 2:
+            //up
+            xChange = 0
+            yChange = -1
+            break
+        case 3:
+            //right
+            xChange = 1
+            yChange = 0
+            break
+        case 4:
+            //down
+            xChange = 0
+            yChange = 1
+            break
+        case 0:
+            //dead
+            xChange = 0
+            yChange = 0
+            break
+        default:
+            break
         }
         if scene.playerPositions.count > 0 {
             var start = scene.playerPositions.count - 1
@@ -96,14 +109,14 @@ class GameManager {
         if scene.playerPositions.count > 0 {
             let x = scene.playerPositions[0].1
             let y = scene.playerPositions[0].0
-            if y > 40 {
+            if y > screenHeight {
                 scene.playerPositions[0].0 = 0
             } else if y < 0 {
-                scene.playerPositions[0].0 = 40
-            } else if x > 20 {
+                scene.playerPositions[0].0 = screenHeight
+            } else if x > screenWidth {
                 scene.playerPositions[0].1 = 0
             } else if x < 0 {
-                scene.playerPositions[0].1 = 20
+                scene.playerPositions[0].1 = screenWidth
             }
         }
         renderChange()
@@ -122,11 +135,11 @@ class GameManager {
     
     /// Create a new point of snake food
     private func generateNewPoint() {
-        var randomX = CGFloat(arc4random_uniform(19))
-        var randomY = CGFloat(arc4random_uniform(39))
+        var randomX = CGFloat(arc4random_uniform(UInt32(screenWidth)))
+        var randomY = CGFloat(arc4random_uniform(UInt32(screenHeight)))
         while contains(a: scene.playerPositions, v: (Int(randomX), Int(randomY))) {
-            randomX = CGFloat(arc4random_uniform(19))
-            randomY = CGFloat(arc4random_uniform(39))
+            randomX = CGFloat(arc4random_uniform(UInt32(screenWidth)))
+            randomY = CGFloat(arc4random_uniform(UInt32(screenHeight)))
         }
         scene.scorePos = CGPoint(x: randomX, y: randomY)
     }
@@ -140,8 +153,8 @@ class GameManager {
                 currentScore += 1
                 scene.currentScore.text = "Score: \(currentScore)"
                 let remainder = (Int(scene.currentScore.text ?? "0") ?? 0) % 10
-                if (remainder == 0 && timeExtension >= 0.02) {
-                    timeExtension-=0.02
+                if (remainder == 0 && timeExtension >= speedFactor) {
+                    timeExtension-=speedFactor
                 }
                 generateNewPoint()
                 scene.playerPositions.append(scene.playerPositions.last!)
@@ -151,7 +164,7 @@ class GameManager {
         }
     }
     
-    /// Check if the snake is still alive, if not it remove the snake positions and reset its direction
+    /// Check if the snake is still alive, if not it removes the snake positions and reset its direction
     private func checkForDeath() {
         if scene.playerPositions.count > 0 {
             var arrayOfPositions = scene.playerPositions
@@ -166,32 +179,25 @@ class GameManager {
     /// Check if it is a game over, if is true then this method will clean some attributes
     private func finishAnimation() {
         if playerDirection == 0 && scene.playerPositions.count > 0 {
-            var hasFinished = true
-            let headOfSnake = scene.playerPositions[0]
-            for position in scene.playerPositions {
-                if headOfSnake != position {
-                    hasFinished = false
-                }
+            updateScore()
+            playerDirection = 4
+            //animation has completed
+            scene.scorePos = nil
+            scene.playerPositions.removeAll()
+            renderChange()
+            //return to menu
+            scene.currentScore.run(SKAction.scale(to: 0, duration: 0.4)) {
+                self.scene.currentScore.isHidden = true
             }
-            if hasFinished {
-                updateScore()
-                playerDirection = 4
-                //animation has completed
-                scene.scorePos = nil
-                scene.playerPositions.removeAll()
-                renderChange()
-                //return to menu
-                scene.currentScore.run(SKAction.scale(to: 0, duration: 0.4)) {
-                    self.scene.currentScore.isHidden = true
-                }
-                scene.gameBG.run(SKAction.scale(to: 0, duration: 0.4)) {
-                    self.scene.gameBG.isHidden = true
-                    self.scene.gameLogo.isHidden = false
-                    self.scene.gameLogo.run(SKAction.move(to: CGPoint(x: 0, y: (self.scene.frame.size.height / 2) - 200), duration: 0.5)) {
-                        self.scene.playButton.isHidden = false
-                        self.scene.playButton.run(SKAction.scale(to: 1, duration: 0.3))
-                        self.scene.bestScore.run(SKAction.move(to: CGPoint(x: 0, y: self.scene.gameLogo.position.y - 50), duration: 0.3))
-                    }
+            scene.gameBG.run(SKAction.scale(to: 0, duration: 0.4)) {
+                self.scene.gameBG.isHidden = true
+                self.scene.gameLogo.isHidden = false
+                self.scene.gameLogo.run(SKAction.move(to: CGPoint(x: 0, y: (self.scene.frame.size.height / 2) - 200),
+                                                      duration: 0.5)) {
+                                                        self.scene.playButton.isHidden = false
+                                                        self.scene.playButton.run(SKAction.scale(to: 1, duration: 0.3))
+                                                        self.scene.bestScore.run(SKAction.move(to: CGPoint(x: 0, y: self.scene.gameLogo.position.y - 50),
+                                                                                               duration: 0.3))
                 }
             }
         }
@@ -217,8 +223,10 @@ class GameManager {
                 updatePlayerPosition()
                 checkForScore()
                 checkForDeath()
+                finishAnimation()
             }
         }
     }
     
 }
+

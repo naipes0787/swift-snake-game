@@ -130,7 +130,7 @@ class GameScene: SKScene {
     /// Create the game board, initialize array of cells (Game map)
     private func createGameBoard(width: CGFloat, height: CGFloat) {
         let cellWidth: CGFloat = 27.5
-        let numRows = 40
+        let numRows = 38
         let numCols = 20
         var x = CGFloat(width / -2) + (cellWidth / 2)
         var y = CGFloat(height / 2) - (cellWidth / 2)
